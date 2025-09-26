@@ -1,22 +1,41 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "../lib/supabaseClient";
+import Swal from "sweetalert2";
 import "./../styles/groups.css";
 
 function Groups({ setPage, setSelectedGroup }) {
-  const groups = [
-    { id: 1, name: "Roommates", members: 4, youOwe: 100, youreOwed: 0 },
-    { id: 2, name: "Food Group", members: 3, youOwe: 0, youreOwed: 0 },
-    { id: 3, name: "Trip to Paris", members: 8, youOwe: 0, youreOwed: 700 },
-  ];
-
+  const [groups, setGroups] = useState([]);
   const [search, setSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [newGroup, setNewGroup] = useState({
-    name: "",
-    members: [],
-  });
-  const [memberInput, setMemberInput] = useState("");
+  const [newGroup, setNewGroup] = useState({ name: "", members: [] });
 
-  // Filter groups based on search
+  // Fetch groups from Supabase on mount
+  useEffect(() => {
+    const fetchGroups = async () => {
+      try {
+        const { data, error } = await supabase
+          .from("groups")
+          .select(`id, name, group_members(id, name, email)`);
+        if (error) throw error;
+
+        const formattedGroups = data.map((g) => ({
+          id: g.id,
+          name: g.name,
+          members: g.group_members.length,
+          youOwe: 0,
+          youreOwed: 0,
+        }));
+
+        setGroups(formattedGroups);
+      } catch (err) {
+        console.error("Error fetching groups:", err.message);
+        Swal.fire("Error", "Failed to fetch groups.", "error");
+      }
+    };
+
+    fetchGroups();
+  }, []);
+
   const filteredGroups = groups.filter((g) =>
     g.name.toLowerCase().includes(search.toLowerCase())
   );
@@ -25,7 +44,6 @@ function Groups({ setPage, setSelectedGroup }) {
   const handleCloseModal = () => {
     setIsModalOpen(false);
     setNewGroup({ name: "", members: [] });
-    setMemberInput("");
   };
 
   const handleChange = (e) => {
@@ -33,13 +51,33 @@ function Groups({ setPage, setSelectedGroup }) {
   };
 
   const handleAddMember = () => {
-    if (memberInput.trim() !== "") {
-      setNewGroup((prev) => ({
-        ...prev,
-        members: [...prev.members, memberInput.trim()],
-      }));
-      setMemberInput("");
+    const name = newGroup.memberName?.trim();
+    const email = newGroup.memberEmail?.trim();
+
+    if (!name || !email) {
+      Swal.fire("Validation Error", "Please enter both name and email.", "warning");
+      return;
     }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      Swal.fire("Invalid Email", "Please enter a valid email address.", "warning");
+      return;
+    }
+
+    const emailExists = newGroup.members.some((m) => m.email === email);
+    if (emailExists) {
+      Swal.fire("Duplicate Email", "This email has already been added.", "warning");
+      return;
+    }
+
+    const newMember = { id: Date.now(), name, email };
+    setNewGroup({
+      ...newGroup,
+      members: [...(newGroup.members || []), newMember],
+      memberName: "",
+      memberEmail: "",
+    });
   };
 
   const handleRemoveMember = (index) => {
@@ -49,10 +87,48 @@ function Groups({ setPage, setSelectedGroup }) {
     }));
   };
 
-  const handleCreateGroup = (e) => {
+  const handleCreateGroup = async (e) => {
     e.preventDefault();
-    console.log("New Group Created:", newGroup);
-    handleCloseModal();
+    try {
+      const { data: groupData, error: groupError } = await supabase
+        .from("groups")
+        .insert({ name: newGroup.name })
+        .select()
+        .single();
+      if (groupError) throw groupError;
+
+      if (newGroup.members.length > 0) {
+        const membersToInsert = newGroup.members.map((m) => ({
+          group_id: groupData.id,
+          name: m.name,
+          email: m.email,
+        }));
+
+        const { error: membersError } = await supabase
+          .from("group_members")
+          .insert(membersToInsert);
+        if (membersError) throw membersError;
+      }
+
+      setGroups((prev) => [
+        ...prev,
+        {
+          id: groupData.id,
+          name: newGroup.name,
+          members: newGroup.members.length,
+          youOwe: 0,
+          youreOwed: 0,
+        },
+      ]);
+
+      handleCloseModal();
+      Swal.fire("Success", "Group created successfully!", "success");
+
+      console.log("New Group Created:", newGroup);
+    } catch (err) {
+      console.error("Error creating group:", err.message);
+      Swal.fire("Error", "Failed to create group.", "error");
+    }
   };
 
   return (
@@ -104,7 +180,6 @@ function Groups({ setPage, setSelectedGroup }) {
               className="group_card"
               key={g.id}
               onClick={() => {
-                console.log("Clicked group:", g);
                 if (setSelectedGroup) setSelectedGroup(g);
                 if (setPage) setPage("group_details");
               }}
@@ -142,7 +217,9 @@ function Groups({ setPage, setSelectedGroup }) {
               {/* Add members section */}
               <div className="add_members_section">
                 <h3>Members</h3>
-                <div style={{ display: "flex", gap: "0.5rem", marginBottom: "0.5rem" }}>
+
+                {/* Input fields */}
+                <div className="member_inputs">
                   <input
                     type="text"
                     placeholder="Member Name"
@@ -159,33 +236,24 @@ function Groups({ setPage, setSelectedGroup }) {
                       setNewGroup({ ...newGroup, memberEmail: e.target.value })
                     }
                   />
-                  
                 </div>
-                  <button
-                    type="button"
-                    className="small_btn"
-                    onClick={() => {
-                      if (!newGroup.memberName || !newGroup.memberEmail) return;
-                      const newMember = {
-                        id: Date.now(),
-                        name: newGroup.memberName,
-                        email: newGroup.memberEmail,
-                      };
-                      setNewGroup({
-                        ...newGroup,
-                        members: [...(newGroup.members || []), newMember],
-                        memberName: "",
-                        memberEmail: "",
-                      });
-                    }}
-                  >
-                    Add
-                  </button>
-                {/* Display added members (name only) */}
-                <ul>
+
+                {/* Add button below inputs */}
+                <button type="button" className="small_btn" onClick={handleAddMember}>
+                  Add
+                </button>
+
+                {/* Member list table */}
+                <div className="members_list_table">
+                  <div className="members_list_header">
+                    <span>Name</span>
+                    <span>Email</span>
+                    <span>Action</span>
+                  </div>
                   {(newGroup.members || []).map((m) => (
-                    <li key={m.id}>
-                      {m.name}{" "}
+                    <div className="members_list_row" key={m.id}>
+                      <span>{m.name}</span>
+                      <span>{m.email}</span>
                       <button
                         type="button"
                         className="remove_btn"
@@ -198,9 +266,9 @@ function Groups({ setPage, setSelectedGroup }) {
                       >
                         x
                       </button>
-                    </li>
+                    </div>
                   ))}
-                </ul>
+                </div>
               </div>
 
               <div className="modal_actions">
