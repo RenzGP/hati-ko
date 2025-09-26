@@ -1,0 +1,306 @@
+
+/* Groups Page */
+.groups_page {
+  padding: 1rem;
+}
+
+.groups_header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.groups_header h1 {
+  margin: 0;
+}
+
+.btn_new_group {
+  background: #4caf50;
+  border: none;
+  color: white;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.btn_new_group:hover {
+  background: #43a047;
+}
+
+/* Summary Cards */
+.groups_summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.summary_card {
+  background: #1e1e1e;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.summary_card h3 {
+  margin: 0;
+  font-size: 1rem;
+  color: #bbb;
+}
+
+/* Search */
+.group_search {
+  grid-column: 1 / -1; /* ✅ makes it span full width of the grid */
+  padding: 0.6rem;
+  border-radius: 6px;
+  border: none;
+  background: #2a2a2a;
+  color: #eee;
+  margin-bottom: 0.5rem;
+}
+
+/* Group list */
+.groups_list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+}
+
+.group_card {
+  background: #1e1e1e;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.group_title {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: bold;
+}
+
+.group_icon {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #333;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.9rem;
+}
+
+/* Group Details */
+.group_details_page {
+  padding: 1.25rem;
+}
+
+.btn_back {
+  background: none;
+  border: none;
+  color: #ccc;
+  margin-bottom: 0.5rem;
+  cursor: pointer;
+}
+
+.btn_add_expense {
+  background: #4caf50;
+  color: white;
+  padding: 0.5rem 0.9rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* Expense card */
+.expense_list { display: grid; gap: 1rem; margin-top: 1rem; }
+.expense_card {
+  background: #1e1e1e;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+/* Paid_by selector */
+.paid_by_section {
+  margin-bottom: 1rem;
+}
+
+.field_label {
+  display: block;
+  color: #bbb;
+  margin-bottom: 0.5rem;
+  font-size: 0.9rem;
+}
+
+.paid_by_list {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+.member_option {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  padding: 0.45rem 0.6rem;
+  border-radius: 8px;
+  background: #2a2a2a;
+  border: 1px solid transparent;
+  cursor: pointer;
+  color: #eee;
+  font-size: 0.95rem;
+}
+
+.member_option:hover { border-color: #3a3a3a; }
+
+.member_option.selected {
+  background: linear-gradient(90deg, rgba(76,175,80,0.12), rgba(76,175,80,0.06));
+  border-color: #4caf50;
+  box-shadow: 0 2px 8px rgba(76,175,80,0.06);
+}
+
+.member_avatar {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #333;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  color: #fff;
+  font-size: 0.9rem;
+}
+
+/* Split section */
+.split_section {
+  margin-bottom: 1rem;
+}
+
+.split_controls {
+  display: flex;
+  gap: 0.6rem;
+  margin-bottom: 0.5rem;
+}
+
+.small_btn {
+  background: #2a2a2a;
+  border: 1px solid #3a3a3a;
+  color: #eee;
+  padding: 0.35rem 0.6rem;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.85rem;
+}
+
+.split_list {
+  display: flex;
+  gap: 0.8rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.5rem;
+}
+
+.split_item {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: #222;
+  padding: 0.3rem 0.6rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: #eee;
+}
+
+.split_preview {
+  color: #bbb;
+  font-size: 0.9rem;
+}
+
+/* make modal inputs consistent with these controls */
+.modal_content select {
+  background: #2a2a2a;
+  color: #eee;
+  border-radius: 8px;
+  padding: 0.6rem 0.8rem;
+  border: 1px solid #333;
+  width: 100%;
+  margin-bottom: 1rem;
+  box-sizing: border-box;
+}
+
+.split_list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); /*equal width per item */
+  gap: 0.8rem;
+}
+
+.split_item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between; /*label left, input right */
+  background: #222;
+  padding: 0.3rem 0.6rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  color: #eee;
+  min-width: 140px; /*guarantees consistent width */
+}
+
+
+/* Custom shares input style */
+.split_item input[type="number"] {
+  width: 70px;
+  height: 24px;       /*  exact control */
+  font-size: 14px;
+  line-height: 1.2;
+  padding: 2px 4px;
+  border-radius: 6px;
+  border: 1px solid #555;
+  background: #222;
+  color: #fff;
+  margin-bottom: 0;
+}
+
+/* Remove number input arrows (Chrome, Edge, Safari) */
+.split_item input[type="number"]::-webkit-inner-spin-button,
+.split_item input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+/* Added for members list in modal */
+.add_members_section ul {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0 0;
+}
+
+.add_members_section li {
+  display: flex;
+  justify-content: space-between; /* name left, button right */
+  align-items: center;
+  padding: 0.25rem 0.5rem;
+  background: #222;
+  border-radius: 6px;
+  margin-bottom: 0.3rem;
+  font-size: 0.9rem;
+  color: #eee;
+}
+
+.add_members_section .remove_btn {
+  background: #444;      /* dark gray to match modal */
+  border: none;
+  color: #eee;           /* light text for contrast */
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.8rem;
+  transition: background 0.2s;
+}
+
+.add_members_section .remove_btn:hover {
+  background: #555;      /* slightly lighter gray on hover */
+}
+
+

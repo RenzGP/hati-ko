@@ -1,42 +1,359 @@
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
-}
-
-html,
 body {
-  max-width: 100vw;
-  overflow-x: hidden;
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #121212;
+  color: #eee;
 }
 
-body {
-  color: var(--foreground);
-  background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+.app_layout {
+  display: flex;
+  height: 100vh;
+  position: relative;
 }
 
-* {
-  box-sizing: border-box;
+/* Sidebar */
+.sidebar {
+  width: 220px;
+  background: #1e1e1e;
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  transition: transform 0.3s ease;
+  overflow-y: auto;
+  height: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+}
+
+/* Closed state */
+.sidebar.closed {
+  transform: translateX(-100%);
+}
+
+/* Open state */
+.sidebar.open {
+  transform: translateX(0);
+}
+
+.sidebar h2.logo {
+  color: #4caf50;
+  margin: 0;
+}
+
+.sidebar nav {
+  margin-top: 1rem;
+  flex: 1;
+  width: 100%;
+}
+
+.sidebar ul {
+  list-style: none;
   padding: 0;
   margin: 0;
 }
 
-a {
-  color: inherit;
-  text-decoration: none;
+.sidebar li {
+  padding: 0.7rem 0;
+  cursor: pointer;
+  font-size: 1rem;
+  color: #ccc;
 }
 
-@media (prefers-color-scheme: dark) {
-  html {
-    color-scheme: dark;
+.sidebar li:hover {
+  color: #4caf50;
+}
+
+.sidebar_footer {
+  margin-top: auto;
+  font-size: 0.9rem;
+  color: #aaa;
+}
+
+.sidebar nav ul li {
+  display: flex;
+  align-items: center;  /* vertically center icon and text */
+  gap: 0.7rem;          /* consistent space between icon and text */
+  padding: 0.7rem 0;
+  cursor: pointer;
+  font-size: 1rem;
+  color: #ccc;
+}
+
+.sidebar nav ul li:hover {
+  color: #4caf50;
+}
+
+.sidebar nav ul li i {
+  min-width: 20px; /* ensures icons align even if widths differ */
+  text-align: center;
+}
+
+/* Burger Button */
+.burger_btn {
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  color: #eee;
+  cursor: pointer;
+  margin-right: 1rem;
+}
+
+.burger_btn:hover {
+  color: #4caf50;
+}
+
+/* Main Content */
+.main_content {
+  flex: 1;
+  padding: 1rem;
+  overflow-y: auto;
+  margin-left: 0; /* default for closed sidebar */
+  transition: margin-left 0.3s ease;
+}
+
+/* Shift main content when sidebar is open */
+.main_content.shifted {
+  margin-left: 220px;
+}
+
+/* Overlay for mobile */
+.overlay {
+  display: block;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 900;
+}
+
+/* Dashboard */
+.dashboard h1 {
+  margin-bottom: 0.5rem;
+}
+
+.dashboard p {
+  color: #bbb;
+  margin-top: 0;
+}
+
+/* Summary cards */
+.summary_cards {
+  display: flex;
+  gap: 1rem;
+  margin: 1rem 0;
+  flex-wrap: wrap;
+}
+
+.summary_cards .card p i {
+  margin-right: 0.5rem;
+}
+
+.card {
+  flex: 1;
+  min-width: 150px;
+  padding: 1rem;
+  border-radius: 8px;
+  text-align: left;
+  font-size: 1.2rem;
+  background: #1e1e1e;
+  color: #eee;
+}
+
+.card p {
+  font-size: 1.5rem;
+  margin-top: 0.5rem;
+  font-weight: bold;
+}
+
+.card .pos {
+  color: #4caf50; /* green */
+}
+
+.card .neg {
+  color: #f44336; /* red */
+}
+
+/* Colored values */
+.pos {
+  color: #4caf50;
+}
+
+.neg {
+  color: #f44336;
+}
+
+/* Panels */
+.main_panels {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.panel {
+  flex: 1;
+  min-width: 250px;
+  background: #1e1e1e;
+  padding: 1rem;
+  border-radius: 8px;
+}
+
+.panel h2 {
+  margin-top: 0;
+  margin-bottom: 1rem;
+  font-size: 1.1rem;
+  color: #4caf50;
+}
+
+.list_item {
+  display: flex;
+  justify-content: space-between;
+  margin: 0.5rem 0;
+  padding: 0.5rem;
+  border-radius: 4px;
+}
+
+.list_item:hover {
+  background: #2a2a2a;
+}
+
+/* Navbar */
+.navbar {
+  background: #1e1e1e;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid #2a2a2a;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.navbar_left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem; /* space between burger and title */
+}
+
+.navbar h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  color: #4caf50;
+}
+
+/* Responsive Rules */
+@media (max-width: 768px) {
+  .main_content {
+    margin-left: 0;
+  }
+
+  .summary_cards {
+    flex-direction: column;
+  }
+
+  .main_panels {
+    flex-direction: column;
   }
 }
+
+/* ===== Modal Overlay ===== */
+.modal_overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0,0,0,0.6);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 999;
+}
+
+/* ===== Modal Content ===== */
+.modal_content {
+  background: #1e1e1e;
+  padding: 2rem;                /* more padding for breathing room */
+  border-radius: 12px;
+  width: 90%;                   /* responsive width */
+  max-width: 420px;             /* fixed max size */
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.45);
+  box-sizing: border-box;       /* ensures padding doesn’t overflow */
+}
+
+/* Modal Heading */
+.modal_content h2 {
+  margin-top: 0;
+  margin-bottom: 1.2rem;
+  color: #fff;
+  font-size: 1.25rem;
+  font-weight: 600;
+  text-align: center;           /* center header for balance */
+}
+
+/* ===== Form Inputs ===== */
+.modal_content input,
+.modal_content textarea {
+  width: 100%;
+  padding: 0.8rem 1rem;         /* more horizontal padding */
+  margin-bottom: 1.2rem;
+  border-radius: 8px;
+  border: 1px solid #333;       /* subtle border for contrast */
+  background: #2a2a2a;
+  color: #eee;
+  font-size: 0.95rem;
+  resize: none;
+  box-sizing: border-box;
+  transition: border 0.2s ease, outline 0.2s ease;
+}
+
+.modal_content input:focus,
+.modal_content textarea:focus {
+  border: 1px solid #4caf50;
+  outline: none;
+}
+
+/* ===== Modal Actions ===== */
+.modal_actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+  margin-top: 0.5rem;
+}
+
+.modal_actions button {
+  padding: 0.6rem 1.4rem;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+
+/* Cancel Button */
+.modal_actions button[type="button"] {
+  background: #444;
+  color: #eee;
+}
+
+.modal_actions button[type="button"]:hover {
+  background: #555;
+  transform: scale(1.02);
+}
+
+/* Primary Submit Button */
+.btn_primary {
+  background: #4caf50;
+  color: white;
+}
+
+.btn_primary:hover {
+  background: #43a047;
+  transform: scale(1.02);
+}
+
+
+
