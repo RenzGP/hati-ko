@@ -313,18 +313,19 @@
 .members_list_table {
   display: flex;
   flex-direction: column;
-  border: 1px solid #ccc;
   border-radius: 4px;
   padding: 0.5rem;
   margin-top: 0.5rem;
+  width: 100%;
 }
 
 .members_list_header, .members_list_row {
   display: grid;
-  grid-template-columns: 2fr 3fr 1fr;
+  grid-template-columns: 1.5fr 2.5fr 0.5fr; /* more balanced */
   align-items: center;
-  padding: 0.25rem 0;
+  padding: 0.5rem 0.25rem;
   border-bottom: 1px solid #eee;
+  text-align: left;
 }
 
 .members_list_header {
@@ -336,18 +337,23 @@
   border-bottom: none;
 }
 
+.members_list_row span {
+  overflow: hidden;
+  text-overflow: ellipsis; /* truncates long text */
+  white-space: nowrap;
+}
+
 .remove_btn {
   background: #222;
   border: none;
   color: white;
-  padding: 0.2rem 0.5rem;
+  padding: 0.25rem 0.6rem;
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.8rem;
+  justify-self: center; /* keeps it aligned nicely */
 }
 
 .remove_btn:hover {
   background: #555;
 }
-
-

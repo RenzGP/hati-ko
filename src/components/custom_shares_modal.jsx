@@ -13,7 +13,7 @@ export default function CustomSharesModal({
   handle_close_modal,
   setNewExpense,
 }) {
-  if (!isModalOpen) return null; // Hide modal if closed
+  if (!isModalOpen) return null;
 
   return (
     <div className="modal_overlay">

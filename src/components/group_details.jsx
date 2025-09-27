@@ -1,7 +1,9 @@
-import { useState } from "react";
-import CustomSharesModal from "./custom_shares_modal"
+import { useState, useEffect } from "react";
+import { supabase } from "../lib/supabaseClient";
+import CustomSharesModal from "./custom_shares_modal";
 
 function Group_Details({ group, setPage }) {
+  const [members, setMembers] = useState([]);
   const [expenses, setExpenses] = useState([
     { id: 1, name: "Dinner", amount: 500, paid_by: "You", date: "2025-09-24" },
     { id: 2, name: "Groceries", amount: 800, paid_by: "John", date: "2025-09-23" },
@@ -11,13 +13,32 @@ function Group_Details({ group, setPage }) {
   const [newExpense, setNewExpense] = useState({
     name: "",
     amount: "",
-    paid_by: "You",
+    paid_by: "",
     notes: "",
-    split_mode: "equal", // equal or custom
-    shares: {}, // { member: shareAmount }
+    split_mode: "equal",
+    shares: {},
   });
 
-  const demo_members = ["You", "John", "Jane"];
+  // 🔹 Fetch members from Supabase
+  useEffect(() => {
+    const fetchMembers = async () => {
+      const { data, error } = await supabase
+        .from("group_members")
+        .select("id, name, email")
+        .eq("group_id", group.id);
+
+      if (error) {
+        console.error("Error fetching members:", error);
+      } else {
+        setMembers(data);
+        if (data.length > 0) {
+          setNewExpense((prev) => ({ ...prev, paid_by: data[0].name }));
+        }
+      }
+    };
+
+    fetchMembers();
+  }, [group.id]);
 
   const handle_open_modal = () => setIsModalOpen(true);
   const handle_close_modal = () => {
@@ -25,7 +46,7 @@ function Group_Details({ group, setPage }) {
     setNewExpense({
       name: "",
       amount: "",
-      paid_by: "",
+      paid_by: members.length > 0 ? members[0].name : "",
       notes: "",
       split_mode: "equal",
       shares: {},
@@ -46,13 +67,11 @@ function Group_Details({ group, setPage }) {
     }));
   };
 
-  // Calculate total custom shares
   const totalShares = Object.values(newExpense.shares).reduce(
     (acc, v) => acc + (parseFloat(v) || 0),
     0
   );
 
-  // Validate custom shares only if in "custom" mode
   const isValidCustom =
     newExpense.split_mode === "custom"
       ? parseFloat(newExpense.amount) === totalShares
@@ -77,8 +96,8 @@ function Group_Details({ group, setPage }) {
       split_mode: newExpense.split_mode,
       shares:
         newExpense.split_mode === "equal"
-          ? demo_members.reduce((acc, m) => {
-              acc[m] = parseFloat(newExpense.amount) / demo_members.length;
+          ? members.reduce((acc, m) => {
+              acc[m.name] = parseFloat(newExpense.amount) / members.length;
               return acc;
             }, {})
           : newExpense.shares,
@@ -97,7 +116,7 @@ function Group_Details({ group, setPage }) {
       <div className="group_header">
         <div>
           <h1>{group.name}</h1>
-          <p>👥 {group.members} members</p>
+          <p>👥 {members.length} members</p>
         </div>
         <button className="btn_add_expense" onClick={handle_open_modal}>
           + Add Expense
@@ -149,7 +168,7 @@ function Group_Details({ group, setPage }) {
       <CustomSharesModal
         isModalOpen={isModalOpen}
         newExpense={newExpense}
-        demo_members={demo_members}
+        demo_members={members.map((m) => m.name)}
         isValidCustom={isValidCustom}
         totalShares={totalShares}
         handle_change={handle_change}
