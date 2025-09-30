@@ -7,6 +7,7 @@ import Sidebar from "./sidebar";
 import Groups from "./groups";
 import Friends from "./friends";
 import Group_Details from "./group_details";
+import User_Details from "./user_details";
 
 function App() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -31,6 +32,7 @@ function App() {
         {page === "group_details" && selectedGroup && (
           <Group_Details group={selectedGroup} setPage={setPage} />
         )}
+        {page === "user_details" && <User_Details />}
       </div>
 
       {sidebarOpen && (
