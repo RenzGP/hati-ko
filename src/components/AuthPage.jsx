@@ -15,30 +15,18 @@ export default function AuthPage() {
     e.preventDefault();
     try {
       let result;
-      if (isLogin) {
-        result = await supabase.auth.signInWithPassword({ email, password });
 
+      if (isLogin) {
+        // LOGIN
+        result = await supabase.auth.signInWithPassword({ email, password });
         if (result.error) throw result.error;
 
-        const { data: profileData, error: profileError } = await supabase
-          .from("profiles")
-          .select("id")
-          .eq("id", result.data.user.id)
-          .single();
-
-        if (!profileData && !profileError) {
-          await supabase.from("profiles").insert({
-            id: result.data.user.id,
-            email: email,
-          });
-        }
-
-        Swal.fire("Welcome!", "Login successful", "success").then(() => {
+        Swal.fire("Welcome!", "Login successful ✅", "success").then(() => {
           router.push("/dashboard");
         });
       } else {
+        // REGISTER
         result = await supabase.auth.signUp({ email, password });
-
         if (result.error) throw result.error;
 
         Swal.fire(
@@ -120,7 +108,7 @@ export default function AuthPage() {
                 marginBottom: "1rem",
                 background: "none",
                 border: "none",
-                color: "#3b82f6", // Tailwind blue-500
+                color: "#3b82f6",
                 cursor: "pointer",
                 textAlign: "left",
                 padding: 0,
