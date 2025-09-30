@@ -34,7 +34,7 @@ export default function AuthPage() {
         }
 
         Swal.fire("Welcome!", "Login successful", "success").then(() => {
-          router.push("/AppLayout");
+          router.push("/dashboard");
         });
       } else {
         result = await supabase.auth.signUp({ email, password });
