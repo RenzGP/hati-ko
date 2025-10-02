@@ -24,15 +24,25 @@ function Group_Details({ group, setPage }) {
     const fetchMembers = async () => {
       const { data, error } = await supabase
         .from("group_members")
-        .select("id, name, email")
+        .select("id, user:user_profile(id, full_name, email)")
         .eq("group_id", group.id);
 
       if (error) {
-        console.error("Error fetching members:", error);
+        console.error("Error fetching members:", error.message);
+      } else if (!data) {
+        console.warn("No members found for group:", group.id);
       } else {
-        setMembers(data);
-        if (data.length > 0) {
-          setNewExpense((prev) => ({ ...prev, paid_by: data[0].name }));
+        // Flatten nested structure
+        const formatted = data.map((m) => ({
+          id: m.id,
+          name: m.user?.full_name || "Unnamed",
+          email: m.user?.email || "",
+        }));
+
+        setMembers(formatted);
+
+        if (formatted.length > 0) {
+          setNewExpense((prev) => ({ ...prev, paid_by: formatted[0].name }));
         }
       }
     };
@@ -141,16 +151,32 @@ function Group_Details({ group, setPage }) {
         ) : (
           expenses.map((exp) => (
             <div className="expense_card" key={exp.id}>
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "space-between",
+                  alignItems: "center",
+                }}
+              >
                 <div>
                   <h3>{exp.name}</h3>
-                  <small>Paid by {exp.paid_by} • {exp.date}</small>
+                  <small>
+                    Paid by {exp.paid_by} • {exp.date}
+                  </small>
                 </div>
                 <div style={{ fontWeight: "700" }}>₱{exp.amount}</div>
               </div>
-              {exp.notes && <p style={{ color: "#bbb", marginTop: "0.6rem" }}>{exp.notes}</p>}
+              {exp.notes && (
+                <p style={{ color: "#bbb", marginTop: "0.6rem" }}>{exp.notes}</p>
+              )}
               {exp.shares && (
-                <div style={{ marginTop: "0.5rem", fontSize: "0.9rem", color: "#bbb" }}>
+                <div
+                  style={{
+                    marginTop: "0.5rem",
+                    fontSize: "0.9rem",
+                    color: "#bbb",
+                  }}
+                >
                   Split:{" "}
                   {Object.entries(exp.shares).map(([m, val]) => (
                     <span key={m} style={{ marginRight: "0.6rem" }}>

@@ -1,3 +1,4 @@
+"use client";
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabaseClient";
 import Swal from "sweetalert2";
@@ -9,22 +10,50 @@ function Groups({ setPage, setSelectedGroup }) {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [newGroup, setNewGroup] = useState({ name: "", members: [] });
 
-  // Fetch groups from Supabase on mount
+  // Fetch groups only where the logged-in user is a member
   useEffect(() => {
     const fetchGroups = async () => {
       try {
+        // get current logged-in user
+        const {
+          data: { user },
+          error: userError,
+        } = await supabase.auth.getUser();
+        if (userError) throw userError;
+        if (!user) return;
+
+        // fetch only groups where user is a member
         const { data, error } = await supabase
-          .from("groups")
-          .select(`id, name, group_members(id, name, email)`);
+          .from("group_members")
+          .select(
+            `
+            group:groups (
+              id,
+              name,
+              group_members (
+                id,
+                user_id,
+                user:user_profile (
+                  id,
+                  email,
+                  full_name
+                )
+              )
+            )
+          `
+          )
+          .eq("user_id", user.id);
+
         if (error) throw error;
 
-        const formattedGroups = data.map((g) => ({
-          id: g.id,
-          name: g.name,
-          members: g.group_members.length,
-          youOwe: 0,
-          youreOwed: 0,
-        }));
+        const formattedGroups =
+          data?.map((gm) => ({
+            id: gm.group.id,
+            name: gm.group.name,
+            members: gm.group.group_members?.length || 0,
+            youOwe: 0,
+            youreOwed: 0,
+          })) || [];
 
         setGroups(formattedGroups);
       } catch (err) {
@@ -80,34 +109,60 @@ function Groups({ setPage, setSelectedGroup }) {
     });
   };
 
-  const handleRemoveMember = (index) => {
-    setNewGroup((prev) => ({
-      ...prev,
-      members: prev.members.filter((_, i) => i !== index),
-    }));
-  };
-
   const handleCreateGroup = async (e) => {
     e.preventDefault();
     try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      if (!user) throw new Error("User not logged in");
+
+      // Create the group
       const { data: groupData, error: groupError } = await supabase
         .from("groups")
         .insert({ name: newGroup.name })
         .select()
         .single();
+
       if (groupError) throw groupError;
 
-      if (newGroup.members.length > 0) {
-        const membersToInsert = newGroup.members.map((m) => ({
-          group_id: groupData.id,
-          name: m.name,
-          email: m.email,
-        }));
+      // Add creator as a member
+      const { error: creatorError } = await supabase.from("group_members").insert({
+        group_id: groupData.id,
+        user_id: user.id,
+      });
+      if (creatorError) throw creatorError;
 
-        const { error: membersError } = await supabase
-          .from("group_members")
-          .insert(membersToInsert);
-        if (membersError) throw membersError;
+      // Insert group members + invitations
+      for (let member of newGroup.members) {
+        const { data: userMatch, error: userError } = await supabase
+          .from("user_profile")
+          .select("id")
+          .eq("email", member.email)
+          .maybeSingle();
+
+        if (userError) throw userError;
+
+        if (userMatch) {
+          // Existing user -> add to group_members
+          const { error: memberInsertError } = await supabase
+            .from("group_members")
+            .insert({
+              group_id: groupData.id,
+              user_id: userMatch.id,
+            });
+          if (memberInsertError) throw memberInsertError;
+        } else {
+          // Not yet registered -> create invitation
+          const { error: inviteError } = await supabase
+            .from("group_invitations")
+            .insert({
+              group_id: groupData.id,
+              email: member.email,
+              invited_by: user.id,
+            });
+          if (inviteError) throw inviteError;
+        }
       }
 
       setGroups((prev) => [
@@ -115,7 +170,7 @@ function Groups({ setPage, setSelectedGroup }) {
         {
           id: groupData.id,
           name: newGroup.name,
-          members: newGroup.members.length,
+          members: newGroup.members.length + 1, // +1 for creator
           youOwe: 0,
           youreOwed: 0,
         },
@@ -123,8 +178,6 @@ function Groups({ setPage, setSelectedGroup }) {
 
       handleCloseModal();
       Swal.fire("Success", "Group created successfully!", "success");
-
-      console.log("New Group Created:", newGroup);
     } catch (err) {
       console.error("Error creating group:", err.message);
       Swal.fire("Error", "Failed to create group.", "error");
@@ -218,7 +271,6 @@ function Groups({ setPage, setSelectedGroup }) {
               <div className="add_members_section">
                 <h3>Members</h3>
 
-                {/* Input fields */}
                 <div className="member_inputs">
                   <input
                     type="text"
@@ -238,12 +290,10 @@ function Groups({ setPage, setSelectedGroup }) {
                   />
                 </div>
 
-                {/* Add button below inputs */}
                 <button type="button" className="small_btn" onClick={handleAddMember}>
                   Add
                 </button>
 
-                {/* Member list table */}
                 <div className="members_list_table">
                   <div className="members_list_header">
                     <span>Name</span>
@@ -260,7 +310,9 @@ function Groups({ setPage, setSelectedGroup }) {
                         onClick={() =>
                           setNewGroup({
                             ...newGroup,
-                            members: newGroup.members.filter((member) => member.id !== m.id),
+                            members: newGroup.members.filter(
+                              (member) => member.id !== m.id
+                            ),
                           })
                         }
                       >

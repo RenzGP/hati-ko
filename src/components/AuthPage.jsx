@@ -3,6 +3,7 @@ import { useState } from "react";
 import { supabase } from "../lib/supabaseClient";
 import { useRouter } from "next/navigation";
 import Swal from "sweetalert2";
+import { acceptInvitationsAfterSignup } from "../utils/acceptInvitationsAfterSignup";
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -21,13 +22,24 @@ export default function AuthPage() {
         result = await supabase.auth.signInWithPassword({ email, password });
         if (result.error) throw result.error;
 
-        Swal.fire("Welcome!", "Login successful ✅", "success").then(() => {
+        Swal.fire("Welcome!", "Login successful", "success").then(() => {
           router.push("/dashboard");
         });
       } else {
         // REGISTER
         result = await supabase.auth.signUp({ email, password });
         if (result.error) throw result.error;
+
+        if (result.data.user) {
+          // create profile
+          await supabase.from("user_profile").insert({
+            id: result.data.user.id,
+            email: email,
+          });
+
+          // handle invitations
+          await acceptInvitationsAfterSignup(result.data.user.id, email);
+        }
 
         Swal.fire(
           "Check your inbox 📩",
@@ -98,7 +110,6 @@ export default function AuthPage() {
             </span>
           </div>
 
-          {/* Forgot Password link */}
           {isLogin && (
             <button
               type="button"
