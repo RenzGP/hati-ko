@@ -9,6 +9,7 @@ export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [username, setUsername] = useState(""); // 🔹 NEW
   const [showPassword, setShowPassword] = useState(false);
   const router = useRouter();
 
@@ -18,26 +19,31 @@ export default function AuthPage() {
       let result;
 
       if (isLogin) {
-        // LOGIN
+        // 🔹 LOGIN
         result = await supabase.auth.signInWithPassword({ email, password });
         if (result.error) throw result.error;
+
+        const user = result.data.user;
+
+        if (user && username) {
+          // 🔹 Update username if provided (row already exists via trigger)
+          await supabase
+            .from("user_profile")
+            .update({ username })
+            .eq("id", user.id);
+        }
 
         Swal.fire("Welcome!", "Login successful", "success").then(() => {
           router.push("/dashboard");
         });
       } else {
-        // REGISTER
+        // 🔹 REGISTER
         result = await supabase.auth.signUp({ email, password });
         if (result.error) throw result.error;
 
         if (result.data.user) {
-          // create profile
-          await supabase.from("user_profile").insert({
-            id: result.data.user.id,
-            email: email,
-          });
-
-          // handle invitations
+          // ✅ No insert needed — trigger handles it
+          // 🔹 Handle invitations
           await acceptInvitationsAfterSignup(result.data.user.id, email);
         }
 
@@ -77,6 +83,15 @@ export default function AuthPage() {
       <div className="modal_content">
         <h2>{isLogin ? "Login" : "Register"}</h2>
         <form onSubmit={handleAuth}>
+          {/* Username input for BOTH login and register */}
+          <input
+            type="text"
+            placeholder="Username"
+            value={username}
+            onChange={(e) => setUsername(e.target.value)}
+            required={!isLogin} // required only on register
+          />
+
           <input
             type="email"
             placeholder="Email"

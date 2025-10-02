@@ -1,6 +1,9 @@
+"use client";
 import { useState, useEffect } from "react";
 import { supabase } from "../lib/supabaseClient";
 import CustomSharesModal from "./custom_shares_modal";
+import Swal from "sweetalert2";
+import "./../styles/groups.css";
 
 function Group_Details({ group, setPage }) {
   const [members, setMembers] = useState([]);
@@ -19,7 +22,12 @@ function Group_Details({ group, setPage }) {
     shares: {},
   });
 
-  // 🔹 Fetch members from Supabase
+  // 🔹 Member Modal state
+  const [isMemberModalOpen, setIsMemberModalOpen] = useState(false);
+  const [newMember, setNewMember] = useState({ name: "", email: "" });
+  const [loadingInvite, setLoadingInvite] = useState(false);
+
+  // 🔹 Fetch members
   useEffect(() => {
     const fetchMembers = async () => {
       const { data, error } = await supabase
@@ -32,7 +40,6 @@ function Group_Details({ group, setPage }) {
       } else if (!data) {
         console.warn("No members found for group:", group.id);
       } else {
-        // Flatten nested structure
         const formatted = data.map((m) => ({
           id: m.id,
           name: m.user?.full_name || "Unnamed",
@@ -50,6 +57,7 @@ function Group_Details({ group, setPage }) {
     fetchMembers();
   }, [group.id]);
 
+  // Expense modal handlers
   const handle_open_modal = () => setIsModalOpen(true);
   const handle_close_modal = () => {
     setIsModalOpen(false);
@@ -117,6 +125,44 @@ function Group_Details({ group, setPage }) {
     handle_close_modal();
   };
 
+  // 🔹 Add Member Invite
+  const handleAddMember = async (e) => {
+    e.preventDefault();
+    if (!newMember.email) {
+      Swal.fire("Missing Email", "Please enter an email", "warning");
+      return;
+    }
+
+    setLoadingInvite(true);
+
+    try {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+
+      if (!user) {
+        Swal.fire("Error", "You must be logged in", "error");
+        return;
+      }
+
+      const { error } = await supabase.from("group_invitations").insert({
+        group_id: group.id,
+        email: newMember.email,
+        invited_by: user.id,
+      });
+
+      if (error) throw error;
+
+      Swal.fire("Invitation Sent", "User invited successfully 📩", "success");
+      setNewMember({ name: "", email: "" });
+      setIsMemberModalOpen(false);
+    } catch (err) {
+      Swal.fire("Error", err.message, "error");
+    } finally {
+      setLoadingInvite(false);
+    }
+  };
+
   return (
     <div className="group_details_page">
       <button className="btn_back" onClick={() => setPage("groups")}>
@@ -128,11 +174,20 @@ function Group_Details({ group, setPage }) {
           <h1>{group.name}</h1>
           <p>👥 {members.length} members</p>
         </div>
-        <button className="btn_add_expense" onClick={handle_open_modal}>
-          + Add Expense
-        </button>
+        <div style={{ display: "flex", gap: "0.5rem" }}>
+          <button className="btn_add_expense" onClick={handle_open_modal}>
+            + Add Expense
+          </button>
+          <button
+            className="btn_add_member bg-green-600 text-white px-4 py-2 rounded"
+            onClick={() => setIsMemberModalOpen(true)}
+          >
+            + Add Member
+          </button>
+        </div>
       </div>
 
+      {/* Summary */}
       <div className="groups_summary" style={{ marginBottom: "1rem" }}>
         <div className="summary_card">
           <h3>You Owe</h3>
@@ -203,6 +258,51 @@ function Group_Details({ group, setPage }) {
         handle_close_modal={handle_close_modal}
         setNewExpense={setNewExpense}
       />
+
+      {/* 🔹 Add Member Modal */}
+      {isMemberModalOpen && (
+        <div className="modal_overlay">
+          <div className="modal_content">
+            <h2>Add Member</h2>
+            <form onSubmit={handleAddMember}>
+              <input
+                type="text"
+                placeholder="Enter name"
+                value={newMember.name}
+                onChange={(e) =>
+                  setNewMember({ ...newMember, name: e.target.value })
+                }
+                className="border p-2 w-full mb-2"
+              />
+              <input
+                type="email"
+                placeholder="Enter email"
+                value={newMember.email}
+                onChange={(e) =>
+                  setNewMember({ ...newMember, email: e.target.value })
+                }
+                className="border p-2 w-full mb-2"
+              />
+              <div style={{ display: "flex", justifyContent: "flex-end", gap: "0.5rem" }}>
+                <button
+                  type="button"
+                  onClick={() => setIsMemberModalOpen(false)}
+                  className="bg-gray-400 text-white px-4 py-2 rounded"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={loadingInvite}
+                  className="bg-green-600 text-white px-4 py-2 rounded"
+                >
+                  {loadingInvite ? "Inviting..." : "Invite"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

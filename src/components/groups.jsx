@@ -14,7 +14,6 @@ function Groups({ setPage, setSelectedGroup }) {
   useEffect(() => {
     const fetchGroups = async () => {
       try {
-        // get current logged-in user
         const {
           data: { user },
           error: userError,
@@ -22,7 +21,6 @@ function Groups({ setPage, setSelectedGroup }) {
         if (userError) throw userError;
         if (!user) return;
 
-        // fetch only groups where user is a member
         const { data, error } = await supabase
           .from("group_members")
           .select(
@@ -36,7 +34,7 @@ function Groups({ setPage, setSelectedGroup }) {
                 user:user_profile (
                   id,
                   email,
-                  full_name
+                  username
                 )
               )
             )
@@ -80,11 +78,10 @@ function Groups({ setPage, setSelectedGroup }) {
   };
 
   const handleAddMember = () => {
-    const name = newGroup.memberName?.trim();
     const email = newGroup.memberEmail?.trim();
 
-    if (!name || !email) {
-      Swal.fire("Validation Error", "Please enter both name and email.", "warning");
+    if (!email) {
+      Swal.fire("Validation Error", "Please enter an email.", "warning");
       return;
     }
 
@@ -100,11 +97,10 @@ function Groups({ setPage, setSelectedGroup }) {
       return;
     }
 
-    const newMember = { id: Date.now(), name, email };
+    const newMember = { id: Date.now(), email };
     setNewGroup({
       ...newGroup,
       members: [...(newGroup.members || []), newMember],
-      memberName: "",
       memberEmail: "",
     });
   };
@@ -117,7 +113,6 @@ function Groups({ setPage, setSelectedGroup }) {
       } = await supabase.auth.getUser();
       if (!user) throw new Error("User not logged in");
 
-      // Create the group
       const { data: groupData, error: groupError } = await supabase
         .from("groups")
         .insert({ name: newGroup.name })
@@ -126,14 +121,12 @@ function Groups({ setPage, setSelectedGroup }) {
 
       if (groupError) throw groupError;
 
-      // Add creator as a member
       const { error: creatorError } = await supabase.from("group_members").insert({
         group_id: groupData.id,
         user_id: user.id,
       });
       if (creatorError) throw creatorError;
 
-      // Insert group members + invitations
       for (let member of newGroup.members) {
         const { data: userMatch, error: userError } = await supabase
           .from("user_profile")
@@ -144,7 +137,6 @@ function Groups({ setPage, setSelectedGroup }) {
         if (userError) throw userError;
 
         if (userMatch) {
-          // Existing user -> add to group_members
           const { error: memberInsertError } = await supabase
             .from("group_members")
             .insert({
@@ -153,7 +145,6 @@ function Groups({ setPage, setSelectedGroup }) {
             });
           if (memberInsertError) throw memberInsertError;
         } else {
-          // Not yet registered -> create invitation
           const { error: inviteError } = await supabase
             .from("group_invitations")
             .insert({
@@ -170,7 +161,7 @@ function Groups({ setPage, setSelectedGroup }) {
         {
           id: groupData.id,
           name: newGroup.name,
-          members: newGroup.members.length + 1, // +1 for creator
+          members: newGroup.members.length + 1,
           youOwe: 0,
           youreOwed: 0,
         },
@@ -273,14 +264,6 @@ function Groups({ setPage, setSelectedGroup }) {
 
                 <div className="member_inputs">
                   <input
-                    type="text"
-                    placeholder="Member Name"
-                    value={newGroup.memberName || ""}
-                    onChange={(e) =>
-                      setNewGroup({ ...newGroup, memberName: e.target.value })
-                    }
-                  />
-                  <input
                     type="email"
                     placeholder="Member Email"
                     value={newGroup.memberEmail || ""}
@@ -296,13 +279,11 @@ function Groups({ setPage, setSelectedGroup }) {
 
                 <div className="members_list_table">
                   <div className="members_list_header">
-                    <span>Name</span>
                     <span>Email</span>
                     <span>Action</span>
                   </div>
                   {(newGroup.members || []).map((m) => (
                     <div className="members_list_row" key={m.id}>
-                      <span>{m.name}</span>
                       <span>{m.email}</span>
                       <button
                         type="button"

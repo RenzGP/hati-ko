@@ -302,7 +302,6 @@
 .add_members_section .remove_btn:hover {
   background: #555;      /* slightly lighter gray on hover */
 }
-
 .member_inputs {
   display: flex;
   gap: 0.5rem;
@@ -319,9 +318,10 @@
   width: 100%;
 }
 
-.members_list_header, .members_list_row {
+.members_list_header,
+.members_list_row {
   display: grid;
-  grid-template-columns: 1.5fr 2.5fr 0.5fr; /* more balanced */
+  grid-template-columns: 3fr 0.7fr; /* Email gets more space, Action has enough */
   align-items: center;
   padding: 0.5rem 0.25rem;
   border-bottom: 1px solid #eee;
@@ -341,6 +341,7 @@
   overflow: hidden;
   text-overflow: ellipsis; /* truncates long text */
   white-space: nowrap;
+  margin-right: 0.5rem;
 }
 
 .remove_btn {
@@ -351,7 +352,7 @@
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.8rem;
-  justify-self: center; /* keeps it aligned nicely */
+  justify-self: end; /* 🔹 aligns button to far right */
 }
 
 .remove_btn:hover {
